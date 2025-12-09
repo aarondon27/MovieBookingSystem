@@ -1,0 +1,218 @@
+﻿@{
+    var seats = ViewData["Seats"];
+    var total = ViewData["Total"];
+    var movie = ViewData["Title"];
+    var theatre = ViewData["Theatre"];
+    var date = ViewData["Date"];
+    var time = ViewData["Time"];
+    var format = ViewData["Format"];
+    var poster = ViewData["Poster"];
+}
+<div class="ticket-wrapper">
+    <h1 style="color:red">🎉 Booking Confirmed!</h1>
+    <br />
+    <div class="ticket">
+
+        <div class="ticket-left">
+            <img src="@poster" alt="@movie" class="ticket-poster" />
+        </div>
+
+        <div class="ticket-right">
+            <h2 class="ticket-title">@movie</h2>
+            <p><strong>Format:</strong> @format</p>
+            <p><strong>Theatre:</strong> @theatre</p>
+            <p><strong>Date:</strong> @date</p>
+            <p><strong>Showtime:</strong> @time</p>
+            <p><strong>Seats:</strong> @seats</p>
+            <p class="total"><strong>Total Paid:</strong> ₹@total</p>
+        </div>
+    </div>
+
+    <button id="downloadBtn" class="btn btn-success">📄 Download Ticket</button><br />
+    <a asp-controller="Movies" asp-action="NowPlayingFromApi" class="btn btn-outline-primary" style="margin-top:10px;">
+        Back to Movies
+    </a>
+</div>
+
+<style>
+    .ticket-wrapper {
+        text-align: center;
+        margin-top: 40px;
+    }
+
+    .ticket {
+        width: 600px;
+        margin: auto;
+        border: 2px dashed #444;
+        border-radius: 12px;
+        display: flex;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .ticket-left {
+        width: 35%;
+    }
+
+    .ticket-poster {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-right: 2px solid #eee;
+    }
+
+    .ticket-right {
+        flex: 1;
+        padding: 20px;
+        text-align: left;
+    }
+
+    .ticket-title {
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+
+    .total {
+        font-size: 18px;
+        color: green;
+        margin-top: 10px;
+    }
+
+    #downloadBtn {
+        margin-top: 20px;
+        padding: 10px 24px;
+        font-size: 18px;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+
+            const btn = document.getElementById("downloadBtn");
+
+            if (!btn) {
+                console.error("❌ ERROR: Button #downloadBtn not found in DOM.");
+                return;
+            }
+
+            btn.addEventListener("click", async () => {
+
+                // Helper function to decode HTML entities
+                function decodeHtml(html) {
+                    const txt = document.createElement("textarea");
+                    txt.innerHTML = html;
+                    return txt.value;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF("p", "mm", "a5");
+
+                // Backend values inserted by Razor
+                const movieTitle = decodeHtml("@ViewData["Title"]");
+                const seats = decodeHtml("@ViewData["Seats"]");
+                const total = "@ViewData["Total"]";
+                const date = decodeHtml("@ViewData["Date"]");
+                const time = decodeHtml("@ViewData["Time"]");
+                const theatre = decodeHtml("@ViewData["Theatre"]");
+                const format = decodeHtml("@ViewData["Format"]");
+                const posterUrl = "@ViewData["Poster"]";
+                let posterBase64 = null;
+
+                // Border
+                doc.setDrawColor(60, 60, 60);
+                doc.setLineWidth(1);
+                doc.roundedRect(5, 5, 138, 198, 5, 5, "S");
+
+                // Title
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(18);
+                doc.text("BOOKING CONFIRMED", 74, 18, { align: "center" });
+
+                // Load poster image
+                if (posterUrl && posterUrl !== "") {
+                    try {
+                        // Use your backend as a proxy to avoid CORS issues
+                        const proxyUrl = `/Movies/GetPosterImage?url=${encodeURIComponent(posterUrl)}`;
+                        const response = await fetch(proxyUrl);
+
+                        if (response.ok) {
+                            const blob = await response.blob();
+
+                            posterBase64 = await new Promise(resolve => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => resolve(reader.result);
+                                reader.readAsDataURL(blob);
+                            });
+
+                            console.log("✅ Poster loaded successfully for PDF");
+                        } 
+                        else {
+                            console.warn("⚠ Poster proxy returned:", response.status);
+                        }
+                    } catch (error) {
+                        console.warn("⚠ Poster image failed to load:", error);
+                    }
+                }
+
+                if (posterBase64) {
+                    const format = posterBase64.includes('image/png') ? 'PNG' : 'JPEG';
+                    doc.addImage(posterBase64, format, 15, 30, 50, 70);
+                }
+
+                // Movie info block
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+
+                const maxWidth = 60; // Maximum width in mm for text
+                const titleLines = doc.splitTextToSize(movieTitle, maxWidth);
+
+                // Add title with line breaks if needed
+                doc.text(titleLines, 75, 35);
+
+                doc.setFontSize(11);
+                doc.text(`Format: ${format}`, 75, 50);
+                doc.text(`Cinema: ${theatre}`, 75, 58);
+                doc.text(`Date: ${date}`, 75, 66);
+                doc.text(`Time: ${time}`, 75, 74);
+
+                // Seats + Price section
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text(`Seats: ${seats}`, 15, 120);
+                doc.text(`Paid: Rs.${total}`, 15, 125);
+
+                // QR Code
+                try {
+                    const qrCanvas = document.createElement("canvas");
+
+                    new QRCode(qrCanvas, {
+                        text: `Movie:${movieTitle}|Seats:${seats}|${date} ${time}`,
+                        width: 100,
+                        height: 100
+                    });
+
+                    await new Promise(r => setTimeout(r, 400)); // wait for QR to render
+                    const qrImg = qrCanvas.querySelector("img");
+
+                    if (qrImg) doc.addImage(qrImg.src, "PNG", 80, 110, 45, 45);
+
+                } catch (qrErr) {
+                    console.warn("⚠ QR Error:", qrErr);
+                }
+
+                // Footer note
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                doc.text("Please show this ticket at entry. Enjoy your show!", 74, 192, { align: "center" });
+
+                // File name sanitized
+                const safeFileName = movieTitle.replace(/[^a-zA-Z0-9]/g, "_");
+                doc.save(`Ticket-${safeFileName}.pdf`);
+            });
+        });
+    </script>
+}

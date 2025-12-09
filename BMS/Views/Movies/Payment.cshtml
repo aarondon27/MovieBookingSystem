@@ -1,0 +1,202 @@
+﻿@{
+    var seats = ViewData["Seats"]?.ToString();
+    var total = ViewData["Total"]?.ToString();
+    var date = ViewData["Date"]?.ToString();
+    var time = ViewData["Time"]?.ToString();
+    var theatre = ViewData["Theatre"]?.ToString();
+    var format = ViewData["Format"]?.ToString();
+    var movieTitle = ViewData["Title"]?.ToString();
+}
+
+
+<div class="payment-container">
+
+    <!-- Title -->
+    <h2 class="page-title">Checkout</h2>
+
+    <!-- Movie Summary -->
+    <div class="summary-box">
+        <h3 class="movie-title">@movieTitle</h3>
+        <span class="badge-format">@format</span>
+
+        <div class="details">
+            <p><strong>Theatre:</strong> @theatre</p>
+            <p><strong>Date:</strong> @date</p>
+            <p><strong>Showtime:</strong> @time</p>
+            <p><strong>Seats:</strong> @seats</p>
+        </div>
+
+        <div class="total-price">
+            <strong>Total:</strong> ₹@total
+        </div>
+    </div>
+
+    <!-- Payment Form -->
+    <form method="post" asp-action="ConfirmPayment" class="payment-form">
+        <label for="upi" class="form-label">Enter UPI ID</label>
+        <input id="upi" type="text" name="UpiId" class="form-control" placeholder="example@upi" required />
+        <small id="upiStatus" style="display:block; margin-top:5px; font-weight:600;"></small>
+
+
+        <input type="hidden" name="Seats" value="@seats" />
+        <input type="hidden" name="Total" value="@total" />
+
+        <button type="submit" id="payBtn" class="btn btn-pay" disabled>
+            Pay ₹ @total
+        </button>
+    </form>
+
+    <!-- Payment Processing Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content processing-box">
+                <div class="modal-body text-center">
+                    <div class="loader"></div>
+                    <h4 class="mt-3">Processing Payment...</h4>
+                    <p>Please wait while we confirm your transaction.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .payment-container {
+        max-width: 450px;
+        margin: 50px auto;
+        padding: 20px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+    }
+
+    .page-title {
+        font-size: 28px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .summary-box {
+        background: white;
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px solid #ddd;
+        box-shadow: 0px 3px 10px rgba(0,0,0,0.05);
+        margin-bottom: 25px;
+    }
+
+    .movie-title {
+        font-size: 23px;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .badge-format {
+        background: #d9534f;
+        padding: 6px 12px;
+        color: white;
+        border-radius: 20px;
+        font-size: 14px;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+
+    .details p {
+        margin: 6px 0;
+        font-size: 15px;
+    }
+
+    .total-price {
+        font-size: 20px;
+        margin-top: 10px;
+        font-weight: bold;
+        color: #000;
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
+    }
+
+    .payment-form {
+        margin-top: 20px;
+        text-align: left;
+    }
+
+    .form-label {
+        font-weight: bold;
+        margin-bottom: 6px;
+        display: inline-block;
+    }
+
+    #upi {
+        width: 100%;
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
+
+    .btn-pay {
+        width: 100%;
+        background: #28a745;
+        color: white;
+        padding: 14px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-pay:hover {
+        background: #218838;
+    }
+
+</style>
+
+@section Scripts {
+    <script>
+        const upiInput = document.getElementById("upi");
+        const payButton = document.getElementById("payBtn"); 
+        const upiStatus = document.getElementById("upiStatus");
+
+        const amount = "@total";
+        const movieTitle = "@movieTitle";
+
+        const paymentForm = document.querySelector(".payment-form");
+
+        // Regex to validate UPI format like: name@bank
+        const upiRegex = /^[\w.-]{3,256}@@[a-zA-Z]{2,15}$/;
+
+        // Validate UPI in real-time
+        upiInput.addEventListener("input", () => {
+            const value = upiInput.value.trim();
+
+            if (upiRegex.test(value)) {
+                upiStatus.innerHTML = "✔ Valid UPI ID";
+                upiStatus.style.color = "green";
+                payButton.disabled = false;
+            } else {
+                upiStatus.innerHTML = "❌ Invalid UPI format (Ex: name@bank)";
+                upiStatus.style.color = "red";
+                payButton.disabled = true;
+            }
+        });
+
+        // Handle payment click
+        payButton.addEventListener("click", (e) => {
+            e.preventDefault();
+
+            // Show waiting modal
+            const modal = new bootstrap.Modal(document.getElementById("paymentModal"));
+            modal.show();
+
+            // payButton.innerHTML = "⏳ Processing Payment...";
+            payButton.disabled = true;
+
+            // Submit after delay
+            setTimeout(() => {
+                paymentForm.submit();
+            }, 4000);
+        });
+    </script>
+}

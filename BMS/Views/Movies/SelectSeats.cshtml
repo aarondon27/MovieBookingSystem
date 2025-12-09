@@ -1,0 +1,249 @@
+﻿@{
+    var movieId = ViewData["MovieId"];
+    var date = ViewData["Date"]?.ToString();
+    var time = ViewData["Time"]?.ToString();
+    var theatre = ViewData["Theatre"]?.ToString();
+    var bookedSeats = ViewBag.BookedSeats as List<string> ?? new List<string>();
+}
+
+@functions {
+    int GetSeatPrice(string seatId)
+    {
+        char row = seatId[0]; // First letter = A,B,C...
+
+        return row switch
+        {
+            'H' or 'I' or 'J' => 260,
+            'D' or 'E' or 'F' or 'G' => 180,
+            'A' or 'B' or 'C' => 100,
+            _ => 100
+        };
+    }
+}
+
+
+<!--Movie Name and Format-->
+<h2 id="movieTitle">@ViewData["Title"]</h2>
+<h4 id="selectedFormatText"></h4>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const format = sessionStorage.getItem("SelectedFormat");
+        if (format) {
+            document.getElementById("selectedFormatText").innerText = format;
+        }
+    });
+</script>
+<hr />
+
+<!--Show Details-->
+<h2>@theatre</h2>
+<p><strong>Date:</strong> @date</p>
+<p><strong>Showtime:</strong> @time</p>
+<hr />
+<h3>Select Your Seats</h3>
+
+
+<style>
+    .screen {
+        width: 100%;
+        padding: 15px;
+        background: #f2f2f2;
+        text-align: center;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .seat-layout {
+        margin: auto;
+        width: fit-content;
+    }
+
+    .seat-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .row-label {
+        width: 30px;
+        font-weight: bold;
+        text-align: right;
+        margin-right: 15px;
+    }
+
+    .aisle {
+        width: 40px; /* SPACE FOR STAIRS */
+    }
+
+    .seat {
+        width: 35px;
+        height: 35px;
+        background: #e0e0e0;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+        line-height: 35px;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        user-select: none;
+        margin-right: 8px;
+    }
+
+        .seat.selected {
+            background: #28a745;
+            color: white;
+            border-color: #1e7e34;
+        }
+
+        .seat.booked {
+            background: #b71c1c;
+            color: white;
+            cursor: not-allowed;
+        }
+
+    #movieTitle {
+        margin-bottom: 5px;
+    }
+
+    #selectedFormatText {
+        color: #d9534f;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+    .pay-container{
+        display: flex;
+        justify-content: center;
+        padding-right: 30px;
+        padding-left: 30px;
+    }
+
+    #confirmBtn {
+        margin-top: 20px;
+        padding-left: 110px;
+        padding-right: 110px;
+    }
+
+    .price-label {
+        margin-left: 15px;
+        font-weight: bold;
+        color: #444;
+    }
+
+    .price-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 25px 0 10px 0;
+    }
+
+        .price-divider span {
+            padding: 0 12px;
+            font-weight: bold;
+            color: #d9534f;
+        }
+
+        .price-divider:before,
+        .price-divider:after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #aaa;
+            margin: 0 10px;
+        }
+
+
+</style>
+
+<!--Seats-->
+@{
+    string[] rows = { "J", "I", "H", "G", "F", "E", "D", "C", "B", "A" };
+}
+<div class="seat-layout">
+    @{
+        string lastPrintedPrice = "";  // ⭐ New tracking variable
+    }
+
+    @foreach (var row in rows)
+    {
+        var exampleSeat = $"{row}1";
+        var rowPrice = GetSeatPrice(exampleSeat);  // price for row
+        var priceText = $"₹{rowPrice}";
+
+        <!--Only print divider when price group changes -->
+        @if (lastPrintedPrice != priceText)
+        {
+            <div class="price-divider">
+                <span>@priceText</span>
+            </div>
+            lastPrintedPrice = priceText;
+        }
+
+        <div class="seat-row">
+            <div class="row-label">@row</div>
+
+            <!-- Seats 1–5 -->
+            @for (int i = 1; i <= 4; i++)
+            {
+                var seatId = $"{row}{i}";
+                var price = GetSeatPrice(seatId);
+
+                <div class="seat @(bookedSeats.Contains(seatId) ? "booked" : "")"
+                     data-seat="@seatId"
+                     data-price="@price"
+                     @(bookedSeats.Contains(seatId) ? "style='pointer-events:none;opacity:0.6'" : "")>
+                    @i
+                </div>
+            }
+
+            <div class="aisle"></div>
+
+            <!-- Seats 6–10 -->
+            @for (int i = 5; i <= 9; i++)
+            {
+                var seatId = $"{row}{i}";
+                var price = GetSeatPrice(seatId);
+
+                <div class="seat @(bookedSeats.Contains(seatId) ? "booked" : "")"
+                     data-seat="@seatId"
+                     data-price="@price"
+                     @(bookedSeats.Contains(seatId) ? "style='pointer-events:none;opacity:0.6'" : "")>
+                    @i
+                </div>
+            }
+
+            <div class="aisle"></div>
+
+            <!-- Seats 11–13 -->
+            @for (int i = 10; i <= 13; i++)
+            {
+                var seatId = $"{row}{i}";
+                var price = GetSeatPrice(seatId);
+
+                <div class="seat @(bookedSeats.Contains(seatId) ? "booked" : "")"
+                     data-seat="@seatId"
+                     data-price="@price"
+                     @(bookedSeats.Contains(seatId) ? "style='pointer-events:none;opacity:0.6'" : "")>
+                    @i
+                </div>
+            }
+
+        </div>
+    }
+</div>
+
+<br />
+
+<!--Screen-->
+<div class="screen">SCREEN THIS WAY</div>
+
+<hr />
+
+<!--Pay Button-->
+<div class="pay-container">
+    <button id="confirmBtn" class="btn btn-primary">Pay</button>  
+</div>
+
+@section Scripts {
+    <script src="~/js/seatscript.js"></script>
+}

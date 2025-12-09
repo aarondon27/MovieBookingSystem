@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+@using System.Security.Claims
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] Book Your Show</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/BMS.styles.css" asp-append-version="true" />
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-black border-bottom box-shadow mb-3">
+            <div class="container-fluid">                                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+
+                    <!--Left Side-->
+                    <ul class="navbar-nav align-items-center">
+
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-area="" asp-controller="Movies" asp-action="NowPlayingFromApi" style="margin-right: 20px">Now Showing</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <select id="citySelector" class="form-select form-select-sm me-1"
+                                    style="background:black; color:indianred; border:1px solid indianred; text-align:center; padding-left:0; padding-right:0;">
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Chennai">Chennai</option>
+                            </select>
+                        </li>
+
+                        <li class="nav-item">
+                            <span id="selectedCityLabel" style="margin-left:6px;"></span>
+                        </li>
+
+                    </ul>
+
+                    <!--Right Side-->
+                    <ul class="navbar-nav ms-auto">
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            {
+                                var nameClaims = User.FindAll(ClaimTypes.Name).ToList();
+                                var displayName = nameClaims.LastOrDefault()?.Value ?? User.Identity?.Name;
+                            
+
+                                <li class="nav-item">
+                                    <span class="navbar-text nav-username">
+                                        Hello, @displayName
+                                    </span>
+                                </li>
+
+                                <li class="nav-item">
+                                    <form method="post" asp-area="Identity" asp-page="/Account/Logout" style="display:inline;">
+                                        <button type="submit" class="btn btn-outline-info">Logout</button>
+                                    </form>
+                                </li>
+                            }
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="btn btn-info" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                            </li>
+                        }
+                    </ul>
+
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+ 
+    <style>
+        .nav-username {
+            display: flex;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            margin: 0 35px;
+        }
+    </style>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025 - BMS  
+        </div>
+    </footer>
+
+    <!--JS for location-->
+    <script>
+        const dropdown = document.getElementById("citySelector");
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedCity = localStorage.getItem("SelectedCity") || "Mumbai";
+
+            // Set dropdown value
+            dropdown.value = savedCity;
+
+            // Update label
+            document.getElementById("selectedCityLabel").innerText = `📍 ${savedCity}`;
+        });
+
+        dropdown.addEventListener("change", () => {
+            localStorage.setItem("SelectedCity", dropdown.value);
+            location.reload(); // refresh so UI updates everywhere
+        });
+    </script>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

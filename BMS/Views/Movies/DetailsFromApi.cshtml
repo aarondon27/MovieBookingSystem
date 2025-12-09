@@ -1,0 +1,129 @@
+﻿@model BMS.Models.Movie
+
+<!--Movie Details-->
+<div class="details-container">
+
+    <img src="@Model.PosterFileName" alt="@Model.Title" class="details-poster" />
+
+    <h1>@Model.Title</h1>
+
+    <p><strong>Runtime:</strong> @Model.Duration minutes</p>
+    <p><strong>Rating:</strong> @Model.AgeRating</p>
+    <p><strong>Rating:</strong>⭐ @Model.ImdbRating / 10</p>
+
+    <h3>Description</h3>
+    <p>@Model.Description</p>
+
+    <button id="openFormatModal" class="btn btn-danger">Book Tickets</button>
+
+    <a asp-action="NowPlayingFromApi" class="back-button" style="text-align:right">
+        ⬅ Back
+    </a>   
+
+</div>
+
+<style>
+    .details-container {
+        padding: 20px;
+    }
+
+    .details-poster {
+        width: 300px;
+        border-radius: 10px;
+    }
+
+    <!--.back-button {
+        text-decoration: none;
+        font-size: 18px;
+        display: block;
+        margin-top: 40px;
+    }-->
+</style>
+
+
+<!-- Movie Format Popup -->
+<div id="formatModal" class="format-modal">
+    <div class="format-content">
+        <h3>Select Movie Format</h3>
+
+        <button class="format-btn" data-format="2D">2D</button>
+        <button class="format-btn" data-format="3D">3D</button>
+        <button class="format-btn" data-format="IMAX 2D">IMAX 2D</button>
+        <button class="format-btn" data-format="IMAX 3D">IMAX 3D</button>
+        <button class="format-btn" data-format="4DX">4DX</button>
+
+        <br />
+        <button id="closeFormatModal" class="btn btn-secondary">Cancel</button>
+    </div>
+</div>
+
+<style>
+    .format-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .format-content {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        text-align: center;
+        width: 300px;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .format-btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        background: #d9534f;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+        .format-btn:hover {
+            background: #c9302c;
+        }
+</style>
+
+<script>
+    const modal = document.getElementById("formatModal");
+    const openBtn = document.getElementById("openFormatModal");
+    const closeBtn = document.getElementById("closeFormatModal");
+
+    // Open modal when BOOK is clicked
+    openBtn.addEventListener("click", () => {
+        modal.style.display = "flex";
+    });
+
+    // Close modal
+    closeBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+    });
+
+    // When a format is chosen
+    document.querySelectorAll(".format-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const selected = btn.getAttribute("data-format");
+
+            // Store temporarily so Book page can read it
+            sessionStorage.setItem("SelectedFormat", selected);
+
+            // Redirect to Book page
+            const movieId = "@Model.TmdbId";
+
+            window.location.href = `/Movies/Book?movieId=${movieId}`;
+        });
+    });
+</script>

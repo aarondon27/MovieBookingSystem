@@ -1,0 +1,93 @@
+﻿@model IEnumerable<BMS.Models.Movie>
+<div class="back">
+
+    <h1>Now Showing</h1>
+
+    <!--Search Bar-->
+    <div class="search-container text-center mb-4">
+        <input id="movieSearch" type="text" placeholder="Search movies..." class="search-input" />
+    </div>
+
+    <div class="movie-grid">
+        <!--All Current Movies-->
+        @foreach (var movie in Model)
+        {
+            <div class="movie-card">
+                <a asp-action="DetailsFromApi" asp-route-id="@movie.TmdbId">
+                    <img src="@movie.PosterFileName" alt="@movie.Title" class="movie-poster" />
+                </a>
+                <h4>@movie.Title</h4>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .movie-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .movie-card {
+        text-align: center;
+        background: #fafafa;
+        border-radius: 10px;
+        padding: 10px;
+        transition: 0.2s;
+        max-width: 230px;
+        margin: 0 auto;
+    }
+
+    .movie-card:hover {
+        transform: scale(1.02);
+    }
+
+    .movie-poster {
+        width: 100%;
+        border-radius: 10px;
+        height: 320px;
+        object-fit: cover;
+    }
+
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        width: 300px;
+        padding: 10px 15px;
+        border: 2px solid #ccc;
+        border-radius: 25px;
+        font-size: 1rem;
+        outline: none;
+        transition: 0.2s ease;
+    }
+
+        .search-input:focus {
+            border-color: #ff3e3e;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.4);
+        }
+
+</style>
+
+<script>
+    const searchInput = document.getElementById("movieSearch");
+
+    //Search bar
+    searchInput.addEventListener("keyup", function () {
+        const query = searchInput.value.toLowerCase().trim();
+        const movieCards = document.querySelectorAll(".movie-card");
+
+        movieCards.forEach(card => {
+            const title = card.querySelector("h4").textContent.toLowerCase();
+
+            if (title.includes(query)) {
+                card.style.display = "block";     // show the card
+            } else {
+                card.style.display = "none";      // hide the card
+            }
+        });
+    });
+</script>

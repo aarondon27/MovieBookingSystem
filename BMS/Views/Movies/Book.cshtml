@@ -1,0 +1,187 @@
+﻿@model BMS.Models.BookingPage 
+
+
+<div class="booking-container">
+    <!-- Movie Title --> 
+    <h2 class="movie-title">@Model.Movie.Title</h2>
+
+    <!--Movie Format-->
+    <h3 id="selectedFormat" style="text-align:center; margin-bottom:20px; color:#444;"></h3>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const format = sessionStorage.getItem("SelectedFormat");
+            if (format) {
+                document.getElementById("selectedFormat").innerText = format;
+            }
+        });
+    </script>
+
+    <!-- Date Selector -->
+    <div class="date-slider">
+        @foreach (var date in Model.Dates)
+        {
+            <div class="date-item" data-date="@date">@date</div>
+        }
+    </div>
+
+    <!--Date selector logic-->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const dateItems = document.querySelectorAll(".date-item");
+            let savedDate = sessionStorage.getItem("SelectedDate");
+
+            //If no date is saved, default to the 1st button's date
+            if (!savedDate && dateItems.length > 0) {
+                savedDate = dateItems[0].getAttribute("data-date");
+                //Save it to storage
+                sessionStorage.setItem("SelectedDate", savedDate);
+            }
+
+            dateItems.forEach(item => {
+
+                // Highlight stored selection
+                if (item.getAttribute("data-date") === savedDate) {
+                    item.classList.add("active-date");
+                }
+
+                item.addEventListener("click", () => {
+                    dateItems.forEach(d => d.classList.remove("active-date"));
+                    item.classList.add("active-date");
+
+                    sessionStorage.setItem("SelectedDate", item.getAttribute("data-date"));
+                });
+            });
+
+        });
+    </script>
+
+
+    <!-- Theatres + Showtimes -->
+    <div class="theatre-list">
+        @foreach (var theatre in Model.Theatres)
+        {
+            <div class="theatre-block">
+                <h3 class="theatre-name">@theatre.Key</h3>
+
+                <div class="showtime-row">
+                    @foreach (var time in theatre.Value)
+                    {
+                        <a asp-controller="Movies"
+                           asp-action="SelectSeats"
+                           asp-route-movieId="@Model.Movie.TmdbId"
+                           asp-route-date=""   
+                           asp-route-time="@time"
+                           asp-route-theatre="@theatre.Key"
+                           asp-route-format=""
+                           onclick="this.href += '&format=' + sessionStorage.getItem('SelectedFormat');"
+                           class="showtime-btn">
+                            @time
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+
+<style>
+    .booking-container {
+        max-width: 700px;
+        margin: auto;
+        padding: 20px;
+        font-family: Arial;
+    }
+
+    .movie-title {
+        font-size: 28px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* Date Scroll Bar */
+    .date-slider {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        padding: 10px 0;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .date-item {
+        padding: 10px 15px;
+        background: #ececec;
+        border-radius: 8px;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+        .date-item:hover {
+            background: #d3d3d3;
+        }
+
+    .active-date {
+        background: #d9534f;
+        color: white;
+        font-weight: bold;
+        border-radius: 6px;
+    }
+
+
+    /* Theatre Section */
+    .theatre-block {
+        margin-bottom: 30px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+    }
+
+    .theatre-name {
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+
+    /* Showtimes */
+    .showtime-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .showtime-btn {
+        padding: 10px 18px;
+        background: white;
+        border: 1px solid #d9534f;
+        color: #d9534f;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+        .showtime-btn:hover {
+            background: #d9534f;
+            color: white;
+        }
+</style>
+
+<!--Showtime JS-->
+<script>
+    document.querySelectorAll(".showtime-btn").forEach(btn => {
+        btn.addEventListener("click", (event) => {
+
+            let selectedDate = sessionStorage.getItem("SelectedDate");
+
+            if (!selectedDate) {
+                selectedDate = "@Model.Dates.First()"; // fallback
+            }
+
+            // Modify link href before following it
+            const url = new URL(btn.href, window.location.origin);
+            url.searchParams.set("date", selectedDate);
+
+            btn.href = url.toString();
+        });
+    });
+</script>
