@@ -416,3 +416,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+appsettings.json
+appsettings.Development.json
+# Sensitive local config
+appsettings.json
+appsettings.Development.json
+*.db
